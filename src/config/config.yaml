@@ -1,0 +1,15 @@
+detector:
+  model: yolo
+  model_path: yolo11n.pt
+
+depth:
+  model: depth_anything
+  model_path: ""
+
+device: cpu
+confidence_threshold: 0.0
+
+paths:
+  image: ../street_scene.jpg
+  output_images: outputs/images
+  output_videos: outputs/videos

@@ -1,162 +1,156 @@
-# Guardian Vision
+# Guardian Vision - Modular Research Framework
 
-**Guardian Vision** is a computer vision module for autonomous driving systems that enables a vehicle to understand pedestrian risk using a single RGB camera. Instead of relying on expensive sensors such as LiDAR, Guardian Vision combines human detection and monocular depth estimation to build a 3D understanding of the scene and estimate the risk posed by nearby pedestrians.
+Guardian Vision is a master's research framework for pedestrian-centric scene understanding in autonomous driving. The current implementation preserves the existing human detection behavior and refactors the architecture to support multiple detectors, multiple depth models, and future localization, risk, and evaluation modules.
 
-The project is designed as a perception module within a larger autonomous driving system. It does not directly control the vehicle; instead, it provides risk information for use by planning and control modules.
+## Current Status
 
----
+- Human detection is fully functional with YOLO through a factory-based interface.
+- Depth, localization, risk, and evaluation modules are scaffolded for future sprints.
+- Placeholder model classes intentionally raise `NotImplementedError`.
 
-## Project Objectives
-
-* Detect pedestrians in real time.
-* Estimate the distance of each pedestrian from a monocular RGB image.
-* Build a 3D representation of pedestrian locations.
-* Classify pedestrians into different risk levels.
-* Output risk information that autonomous driving decision systems can use.
-* Evaluate the proposed approach using public datasets and a custom simulation dataset.
-
----
-
-## System Pipeline
+## Project Structure
 
 ```text
-RGB Camera
-      │
-      ▼
-Pedestrian Detection
-      │
-      ▼
-Monocular Depth Estimation
-      │
-      ▼
-3D Pedestrian Localization
-      │
-      ▼
-Guardian Risk Engine
-      │
-      ▼
-Risk Assessment
-      │
-      ▼
-Output to Planning Module
-```
-
----
-
-## Repository Structure (Planned)
-
-```
 GuardianVision/
-│
-├── datasets/
-│   ├── raw/
-│   ├── processed/
-│   └── simulation/
-│
-├── docs/
-│   ├── literature_review/
-│   ├── methodology/
-│   └── report/
-│
-├── models/
-│   ├── detection/
-│   ├── depth/
-│   └── risk_engine/
-│
-├── notebooks/
-│
-├── scripts/
-│
-├── src/
-│   ├── detection/
-│   ├── depth/
-│   ├── localization/
-│   ├── risk_assessment/
-│   └── visualization/
-│
+
+src/
+├── config/
+│   ├── __init__.py
+│   ├── config.yaml
+│   └── loader.py
+├── depth/
+│   ├── __init__.py
+│   ├── base.py
+│   ├── factory.py
+│   ├── depth_anything.py
+│   ├── metric3d.py
+│   ├── midas.py
+│   └── test_depth.py
+├── detection/
+│   ├── __init__.py
+│   ├── base.py
+│   ├── factory.py
+│   ├── yolo_detector.py
+│   ├── rtdetr_detector.py
+│   └── test_detector.py
 ├── evaluation/
-│
-├── results/
-│
-├── presentation/
-│
-└── README.md
+│   └── __init__.py
+├── localization/
+│   ├── __init__.py
+│   └── localizer.py
+├── risk/
+│   └── __init__.py
+├── utils/
+│   ├── __init__.py
+│   └── image_utils.py
+├── visualization/
+│   ├── __init__.py
+│   └── visualizer.py
+└── main.py
+
+datasets/
+models/
+outputs/
+├── images/
+└── videos/
+
+tests/
+requirements.txt
+main.py
+README.md
 ```
 
----
+## Design Principles Applied
 
-## Planned Technologies
+- Abstract Base Classes (`BaseDetector`, `BaseDepthEstimator`)
+- Factory Pattern (`DetectionFactory`, `DepthFactory`)
+- Dataclass-backed configuration objects
+- Strong typing and docstrings
+- Logging-based execution tracing
+- Separation of inference and visualization responsibilities
 
-| Component               | Technology                                |
-| ----------------------- | ----------------------------------------- |
-| Programming Language    | Python                                    |
-| Deep Learning Framework | PyTorch                                   |
-| Object Detection        | YOLO                                      |
-| Depth Estimation        | Depth Anything                            |
-| Simulation              | CARLA (planned)                           |
-| Visualization           | OpenCV                                    |
-| Experiment Tracking     | TensorBoard / Weights & Biases (optional) |
+## Configuration
 
----
+Runtime settings are loaded from [src/config/config.yaml](src/config/config.yaml).
 
-## Current Development Status
+Example:
 
-* [x] Project idea defined
-* [x] Literature review started
-* [x] Initial system architecture designed
-* [ ] Repository structure finalized
-* [ ] Baseline object detection
-* [ ] Baseline depth estimation
-* [ ] Integration of detection and depth
-* [ ] Guardian Risk Engine
-* [ ] Simulation dataset generation
-* [ ] Training and evaluation
-* [ ] Final report
-* [ ] Final presentation
+```yaml
+detector:
+    model: yolo
+    model_path: yolo11n.pt
 
----
+depth:
+    model: depth_anything
+    model_path: ""
 
-## Research Contribution
+device: cpu
+confidence_threshold: 0.0
 
-Guardian Vision aims to bridge the gap between 2D perception and 3D pedestrian risk assessment using only a monocular RGB camera.
+paths:
+    image: ../street_scene.jpg
+    output_images: outputs/images
+    output_videos: outputs/videos
+```
 
-The project combines:
+## Installation
 
-* Real-time pedestrian detection
-* Monocular depth estimation
-* 3D pedestrian localization
-* A novel risk assessment module (Guardian Risk Engine)
+```bash
+pip install -r requirements.txt
+```
 
-The primary research contribution is the design and evaluation of a vision-based risk assessment framework that classifies pedestrians into different safety levels based on their spatial relationship to the vehicle.
+## Usage
 
----
+Run with YAML configuration:
 
-## Future Work
+```bash
+python main.py
+```
 
-Potential extensions include:
+Override image or detector weights from CLI:
 
-* Multi-camera perception
-* LiDAR and radar sensor fusion
-* Pedestrian trajectory prediction
-* Time-to-Collision estimation
-* Vehicle speed-aware risk assessment
-* Real-time deployment on embedded hardware
+```bash
+python main.py --image datasets/000098.png --model yolo11n.pt
+```
 
----
+Optional video processing:
 
-## References
+```bash
+python main.py --image datasets/000098.png --video path/to/video.mp4
+```
 
-The project is based on recent research in:
+`main.py` at the project root is kept as a compatibility wrapper and delegates to `src.main`.
 
-* Object Detection
-* Monocular Depth Estimation
-* Bird's Eye View Perception
-* Autonomous Driving Safety Systems
+## Detection Output Schema
 
-The complete literature review will be available in the `docs/literature_review/` directory.
+Person detections use a reusable, module-agnostic schema:
 
----
+```python
+{
+        "class_id": int,
+        "class_name": str,
+        "confidence": float,
+        "bbox": [x1, y1, x2, y2],
+}
+```
 
-## License
+This format is intended for downstream depth, localization, risk, and evaluation modules.
 
-This repository is currently under development for academic research purposes.
+## Placeholder Modules
+
+The following classes are scaffolds and intentionally not implemented yet:
+
+- `RTDETRDetector`
+- `GroundingDINODetector`
+- `DepthAnythingEstimator`
+- `Metric3DEstimator`
+- `MiDaSEstimator`
+- `ZoeDepthEstimator`
+- `Localizer`
+
+## Tests
+
+```bash
+python -m unittest src.detection.test_detector
+python -m unittest src.depth.test_depth
+```
